@@ -5,58 +5,68 @@ from psycopg2.extras import RealDictCursor
 import json
 import random
 import string
-from datetime import datetime
+import os
 
 app = Flask(__name__)
-CORS(app)
 
-# Database configuration
-DB_CONFIG = {
-    'dbname': 'tictactoe_db',
-    'user': 'postgres',
-    'password': 'password',
-    'host': 'localhost',
-    'port': '5432'
-}
+# Enable CORS for all routes - allow GitHub Pages
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type"]
+    }
+})
+
+# Database configuration from environment variable
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    conn = psycopg2.connect(**DB_CONFIG)
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 def init_db():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    # Create users table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Create games table
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS games (
-            id SERIAL PRIMARY KEY,
-            code VARCHAR(10) UNIQUE NOT NULL,
-            player1_email VARCHAR(255) NOT NULL,
-            player2_email VARCHAR(255),
-            board TEXT NOT NULL,
-            move_history TEXT NOT NULL,
-            current_turn VARCHAR(1) NOT NULL,
-            winner VARCHAR(1),
-            status VARCHAR(20) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Create users table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Create games table
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS games (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR(10) UNIQUE NOT NULL,
+                player1_email VARCHAR(255) NOT NULL,
+                player2_email VARCHAR(255),
+                board TEXT NOT NULL,
+                move_history TEXT NOT NULL,
+                current_turn VARCHAR(1) NOT NULL,
+                winner VARCHAR(1),
+                status VARCHAR(20) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Database initialized successfully!")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+
+@app.route('/')
+def home():
+    return jsonify({"message": "Tic Tac Toe API is running!"})
 
 @app.route('/api/signup', methods=['POST'])
 def signup():
@@ -146,12 +156,18 @@ def join_game():
         game = cur.fetchone()
         
         if not game:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Game not found'}), 404
         
         if game['player2_email']:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Game is full'}), 400
         
         if game['player1_email'] == email:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Cannot join your own game'}), 400
         
         cur.execute('''
@@ -206,6 +222,8 @@ def make_move():
         game = cur.fetchone()
         
         if not game:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Game not found'}), 404
         
         board = json.loads(game['board'])
@@ -217,14 +235,20 @@ def make_move():
         elif email == game['player2_email']:
             symbol = 'O'
         else:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Not a player in this game'}), 403
         
         # Check if it's player's turn
         if game['current_turn'] != symbol:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Not your turn'}), 400
         
         # Check if position is valid
         if board[position] is not None:
+            cur.close()
+            conn.close()
             return jsonify({'error': 'Position already occupied'}), 400
         
         # Make the move
@@ -277,4 +301,5 @@ def check_winner(board):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
