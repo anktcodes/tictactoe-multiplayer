@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sliding Tic Tac Toe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .auth-tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 30px;
+        }
+
+        .auth-tabs button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .auth-tabs button.active {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button.primary {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button.primary:hover {
+            background: #5568d3;
+        }
+
+        button.secondary {
+            width: 100%;
+            padding: 15px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        button.secondary:hover {
+            background: #5a6268;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success {
+            background: #efe;
+            color: #3c3;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-code-display {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .game-code-display .code {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 5px;
+            margin: 20px 0;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 10px;
+            font-size: 48px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cell:hover:not(:disabled) {
+            background: #e0e0e0;
+            transform: scale(1.05);
+        }
+
+        .cell:disabled {
+            cursor: not-allowed;
+        }
+
+        .cell.x {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .cell.o {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .cell.oldest {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 0 4px #ff5722;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .player-info {
+            font-weight: bold;
+        }
+
+        .player-info.active {
+            color: #667eea;
+        }
+
+        .turn-indicator {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .turn-indicator.your-turn {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .turn-indicator.opponent-turn {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .turn-indicator.winner {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: #999;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .hidden {
+            display: none;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #5568d3;
+        }
+
+        .move-counter {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Screen -->
+        <div id="authScreen">
+            <h1>🎮 Sliding Tic Tac Toe</h1>
+            
+            <div class="auth-tabs">
+                <button class="active" onclick="switchAuthTab('login')">Login</button>
+                <button onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+
+            <div id="authError" class="error hidden"></div>
+
+            <div class="input-group">
+                <input type="email" id="authEmail" placeholder="Email" />
+            </div>
+            <div class="input-group">
+                <input type="password" id="authPassword" placeholder="Password" />
+            </div>
+            <button class="primary" onclick="handleAuth()">
+                <span id="authButtonText">Login</span>
+            </button>
+        </div>
+
+        <!-- Menu Screen -->
+        <div id="menuScreen" class="hidden">
+            <div class="header">
+                <h1>Welcome!</h1>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+
+            <div id="menuError" class="error hidden"></div>
+
+            <button class="primary" onclick="createGame()">Create Game</button>
+
+            <div class="divider">or</div>
+
+            <div class="input-group">
+                <input type="text" id="joinCode" placeholder="Enter game code" style="text-transform: uppercase;" />
+            </div>
+            <button class="secondary" onclick="joinGame()">Join Game</button>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="hidden">
+            <h1>Waiting for Player 2...</h1>
+            
+            <div class="game-code-display">
+                <p>Share this code:</p>
+                <div class="code" id="waitingCode">------</div>
+                <button class="copy-btn" onclick="copyCode()">Copy Code</button>
+            </div>
+
+            <button class="secondary" onclick="backToMenu()">Cancel</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <div class="header">
+                <h1>Game: <span id="gameCode"></span></h1>
+                <button class="logout-btn" onclick="backToMenu()">Leave</button>
+            </div>
+
+            <div class="game-info">
+                <div class="player-info" id="player1Info">X: ...</div>
+                <div class="player-info" id="player2Info">O: ...</div>
+            </div>
+
+            <div class="turn-indicator" id="turnIndicator">Loading...</div>
+
+            <div class="board" id="board">
+                <button class="cell" onclick="makeMove(0)"></button>
+                <button class="cell" onclick="makeMove(1)"></button>
+                <button class="cell" onclick="makeMove(2)"></button>
+                <button class="cell" onclick="makeMove(3)"></button>
+                <button class="cell" onclick="makeMove(4)"></button>
+                <button class="cell" onclick="makeMove(5)"></button>
+                <button class="cell" onclick="makeMove(6)"></button>
+                <button class="cell" onclick="makeMove(7)"></button>
+                <button class="cell" onclick="makeMove(8)"></button>
+            </div>
+
+            <div class="move-counter" id="moveCounter">Moves: 0/6</div>
+            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 5px;">
+                Oldest piece will be removed after 6 moves
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let currentUser = null;
+        let currentGame = null;
+        let authMode = 'login';
+        let pollInterval = null;
+
+        // Check if user is logged in
+        function checkAuth() {
+            const user = localStorage.getItem('currentUser');
+            if (user) {
+                currentUser = JSON.parse(user);
+                showScreen('menuScreen');
+            }
+        }
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            const buttons = document.querySelectorAll('.auth-tabs button');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('authButtonText').textContent = mode === 'login' ? 'Login' : 'Sign Up';
+        }
+
+        async function handleAuth() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+
+            if (!email || !password) {
+                showError('authError', 'Email and password required');
+                return;
+            }
+
+            try {
+                const endpoint = authMode === 'login' ? '/login' : '/signup';
+                const response = await fetch(API_URL + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentUser = { email: data.email };
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    showScreen('menuScreen');
+                } else {
+                    showError('authError', data.error);
+                }
+            } catch (error) {
+                showError('authError', 'Connection error. Make sure the server is running.');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            currentUser = null;
+            showScreen('authScreen');
+        }
+
+        async function createGame() {
+            try {
+                const response = await fetch(API_URL + '/game/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: currentUser.email })
+                });
+
+                const game = await response.json();
+
+                if (response.ok) {
+                    currentGame = game;
+                    document.getElementById('waitingCode').textContent = game.code;
+                    showScreen('waitingScreen');
+                    startPolling();
+                } else {
+                    showError('menuError', game.error);
+                }
+            } catch (error) {
+                showError('menuError', 'Connection error');
+            }
+        }
+
+        async function joinGame() {
+            const code = document.getElementById('joinCode').value.trim().toUpperCase();
+
+            if (!code) {
+                showError('menuError', 'Enter a game code');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL + '/game/join', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, email: currentUser.email })
+                });
+
+                const game = await response.json();
+
+                if (response.ok) {
+                    currentGame = game;
+                    showGameScreen();
+                    startPolling();
+                } else {
+                    showError('menuError', game.error);
+                }
+            } catch (error) {
+                showError('menuError', 'Connection error');
+            }
+        }
+
+        async function makeMove(position) {
+            if (!currentGame) return;
+
+            try {
+                const response = await fetch(API_URL + '/game/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: currentGame.code,
+                        email: currentUser.email,
+                        position
+                    })
+                });
+
+                const game = await response.json();
+
+                if (response.ok) {
+                    currentGame = game;
+                    updateGameScreen();
+                }
+            } catch (error) {
+                console.error('Move error:', error);
+            }
+        }
+
+        async function pollGame() {
+            if (!currentGame) return;
+
+            try {
+                const response = await fetch(API_URL + '/game/' + currentGame.code);
+                const game = await response.json();
+
+                if (response.ok) {
+                    currentGame = game;
+                    
+                    if (game.status === 'playing' && document.getElementById('waitingScreen').classList.contains('hidden') === false) {
+                        showGameScreen();
+                    } else if (game.status === 'playing') {
+                        updateGameScreen();
+                    }
+                }
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }
+
+        function startPolling() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(pollGame, 1000);
+        }
+
+        function stopPolling() {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+            }
+        }
+
+        function showGameScreen() {
+            showScreen('gameScreen');
+            document.getElementById('gameCode').textContent = currentGame.code;
+            updateGameScreen();
+        }
+
+        function updateGameScreen() {
+            const isPlayer1 = currentUser.email === currentGame.player1_email;
+            const mySymbol = isPlayer1 ? 'X' : 'O';
+            const isMyTurn = currentGame.current_turn === mySymbol;
+
+            // Update player info
+            document.getElementById('player1Info').textContent = 'X: ' + currentGame.player1_email.split('@')[0];
+            document.getElementById('player1Info').classList.toggle('active', currentGame.current_turn === 'X');
+            
+            document.getElementById('player2Info').textContent = 'O: ' + (currentGame.player2_email ? currentGame.player2_email.split('@')[0] : 'Waiting...');
+            document.getElementById('player2Info').classList.toggle('active', currentGame.current_turn === 'O');
+
+            // Update turn indicator
+            const indicator = document.getElementById('turnIndicator');
+            if (currentGame.winner) {
+                indicator.className = 'turn-indicator winner';
+                indicator.textContent = currentGame.winner === mySymbol ? 'You Won! 🎉' : 'You Lost 😔';
+            } else if (isMyTurn) {
+                indicator.className = 'turn-indicator your-turn';
+                indicator.textContent = 'Your Turn';
+            } else {
+                indicator.className = 'turn-indicator opponent-turn';
+                indicator.textContent = "Opponent's Turn";
+            }
+
+            // Update board
+            const cells = document.querySelectorAll('.cell');
+            const oldestIndex = currentGame.move_history.length === 6 ? currentGame.move_history[0].position : -1;
+
+            cells.forEach((cell, index) => {
+                const value = currentGame.board[index];
+                cell.textContent = value || '';
+                cell.className = 'cell';
+                
+                if (value === 'X') cell.classList.add('x');
+                if (value === 'O') cell.classList.add('o');
+                if (index === oldestIndex) cell.classList.add('oldest');
+                
+                cell.disabled = !!value || !isMyTurn || !!currentGame.winner;
+            });
+
+            // Update move counter
+            document.getElementById('moveCounter').textContent = `Moves: ${currentGame.move_history.length}/6`;
+        }
+
+        function copyCode() {
+            const code = document.getElementById('waitingCode').textContent;
+            navigator.clipboard.writeText(code);
+            event.target.textContent = 'Copied!';
+            setTimeout(() => {
+                event.target.textContent = 'Copy Code';
+            }, 2000);
+        }
+
+        function backToMenu() {
+            stopPolling();
+            currentGame = null;
+            showScreen('menuScreen');
+            document.getElementById('joinCode').value = '';
+        }
+
+        function showScreen(screenId) {
+            ['authScreen', 'menuScreen', 'waitingScreen', 'gameScreen'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            hideError('authError');
+            hideError('menuError');
+        }
+
+        function showError(elementId, message) {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.classList.remove('hidden');
+        }
+
+        function hideError(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+
+        // Enter key support
+        document.getElementById('authPassword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleAuth();
+        });
+
+        document.getElementById('joinCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') joinGame();
+        });
+
+        // Initialize
+        checkAuth();
+    </script>
+</body>
+</html>
